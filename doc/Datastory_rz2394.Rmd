@@ -249,8 +249,7 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
           random.color=FALSE,
           colors=brewer.pal(9,"Blues"))
 ```
-
-Women more often choose family over work. One reality persists that women most often are the ones who adjust their schedules and make compromises when the needs of children and other family members collide with work. 
+We can notice that many of the top high-frequency words have to do with family members, household chores or daily activities. The things that women care about most are usually associated with "affection". This reflects the fact that women are more emotional and they need to express their feelings and relate to one another. Women more often choose family over work. One reality persists that women most often are the ones who adjust their schedules and make compromises when the needs of children and other family members collide with work. 
 
 The word cloud for males is as follows:  
 ```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
@@ -268,8 +267,7 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
           random.color=FALSE,
           colors=brewer.pal(9,"Blues"))
 ```
-
-
+One thing we can notice from the word cloud is that men are more career-oriented than women. The happy moments key words regarding achievement in both job and school appear much more frequently than women. Another thing worth noting is that the hapiness sources of men are obviously more diverse than women. Besides affection and achievement, the things that can make men happy also include exercise, sports, game, video, party, etc. in their leisure time. Men seem to persue a rich, full and colorful life.    
 
 # Parenthood
 ![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\parenthood.jpg){width=100%}
@@ -289,10 +287,108 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
 \newline
 \newline
 
+```{r}
+Data_country <- merge(hm_data[,c("wid","predicted_category")],demographic[,c("wid","country")])
+# join the processed happy moments dataset with country in demographic data
+Data_country <- Data_country[order(Data_country$country),]
+Data_country <- Data_country[grepl("[A-Z]{3}", Data_country$country),] 
+# remove rows with invalid values
+Data_country_split <- split(Data_country, Data_country$country)
+country.prop.affection <- function(df){
+  return(mean(df$predicted_category == "affection"))
+}
+prop.affection     <- sapply(Data_country_split, country.prop.affection)
+prop.affection.df  <- data.frame(names(prop.affection), prop.affection)
+rownames(prop.affection.df) <- NULL
+prop.affection.df  <- prop.affection.df[-1,]
+colnames(prop.affection.df) <- c("ISO3", "prop.affection")
+sPDF <- joinCountryData2Map(prop.affection.df, 
+                            joinCode = "ISO3",
+                            nameJoinColumn = "ISO3")
+mapDevice() #create world map shaped window
+mapCountryData(sPDF,nameColumnToPlot='prop.affection')
+```
 
+```{r}
+country.prop.achievement <- function(df){
+  return(mean(df$predicted_category == "achievement"))
+}
+prop.achievement     <- sapply(Data_country_split, country.prop.achievement)
+prop.achievement.df  <- data.frame(names(prop.achievement), prop.achievement)
+rownames(prop.achievement.df) <- NULL
+prop.achievement.df  <- prop.achievement.df[-1,]
+colnames(prop.achievement.df) <- c("ISO3", "prop.achievement")
+sPDF <- joinCountryData2Map(prop.achievement.df, 
+                            joinCode = "ISO3",
+                            nameJoinColumn = "ISO3")
+mapDevice() #create world map shaped window
+mapCountryData(sPDF,nameColumnToPlot='prop.achievement')
+```
 
+```{r}
+country.prop.bonding <- function(df){
+  return(mean(df$predicted_category == "bonding"))
+}
+prop.bonding     <- sapply(Data_country_split, country.prop.bonding)
+prop.bonding.df  <- data.frame(names(prop.bonding), prop.bonding)
+rownames(prop.bonding.df) <- NULL
+prop.bonding.df  <- prop.bonding.df[-1,]
+colnames(prop.bonding.df) <- c("ISO3", "prop.bonding")
+sPDF <- joinCountryData2Map(prop.bonding.df, 
+                            joinCode = "ISO3",
+                            nameJoinColumn = "ISO3")
+mapDevice() #create world map shaped window
+mapCountryData(sPDF,nameColumnToPlot='prop.bonding')
+```
 
+```{r}
+country.prop.enjoy_the_moment <- function(df){
+  return(mean(df$predicted_category == "enjoy_the_moment"))
+}
+prop.enjoy_the_moment     <- sapply(Data_country_split, country.prop.enjoy_the_moment)
+prop.enjoy_the_moment.df  <- data.frame(names(prop.enjoy_the_moment),
+                                        prop.enjoy_the_moment)
+rownames(prop.enjoy_the_moment.df) <- NULL
+prop.enjoy_the_moment.df  <- prop.enjoy_the_moment.df[-1,]
+colnames(prop.enjoy_the_moment.df) <- c("ISO3", "prop.enjoy_the_moment")
+sPDF <- joinCountryData2Map(prop.enjoy_the_moment.df, 
+                            joinCode = "ISO3",
+                            nameJoinColumn = "ISO3")
+mapDevice() #create world map shaped window
+mapCountryData(sPDF,nameColumnToPlot='prop.enjoy_the_moment')
+```
 
+```{r}
+country.prop.exercise <- function(df){
+  return(mean(df$predicted_category == "exercise"))
+}
+prop.exercise     <- sapply(Data_country_split, country.prop.exercise)
+prop.exercise.df  <- data.frame(names(prop.exercise), prop.exercise)
+rownames(prop.exercise.df) <- NULL
+prop.exercise.df  <- prop.exercise.df[-1,]
+colnames(prop.exercise.df) <- c("ISO3", "prop.exercise")
+sPDF <- joinCountryData2Map(prop.exercise.df, 
+                            joinCode = "ISO3",
+                            nameJoinColumn = "ISO3")
+mapDevice() #create world map shaped window
+mapCountryData(sPDF,nameColumnToPlot='prop.exercise')
+```
+
+```{r}
+country.prop.exercise <- function(df){
+  return(mean(df$predicted_category == "exercise"))
+}
+prop.exercise     <- sapply(Data_country_split, country.prop.exercise)
+prop.exercise.df  <- data.frame(names(prop.exercise), prop.exercise)
+rownames(prop.exercise.df) <- NULL
+prop.exercise.df  <- prop.exercise.df[-1,]
+colnames(prop.exercise.df) <- c("ISO3", "prop.exercise")
+sPDF <- joinCountryData2Map(prop.exercise.df, 
+                            joinCode = "ISO3",
+                            nameJoinColumn = "ISO3")
+mapDevice() #create world map shaped window
+mapCountryData(sPDF,nameColumnToPlot='prop.exercise')
+```
 
 
 
