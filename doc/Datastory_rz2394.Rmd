@@ -1,5 +1,6 @@
 ---
-title: "R Notebook"
+title: "Exploratory Data Analysis on Happy Moments"
+subtitle: "Does hapiness mean different things to different people? If so, what might be the factors that affect people's definitions of hapiness? And how?"
 output:
   html_notebook:
     df_print: paged
@@ -120,11 +121,11 @@ write_csv(hm_data, "../output/processed_moments.csv")
 \newline
 \newline
 
-This project
+If you ask the people around you to describe the most unforgettable happy moments, you are very likely to be overwhelmed by the variety of their experiences. I'm highly inspired to advance the state of the art of understanding the causes of happiness. I will utilize exploratory data analysis to compare the patterns of happy causes across different subgroups of people to identify the factors that might influence people's hapiness sources.
+
+I will join the cleaned version of happy moments text file and demographic dataset to perform text mining and create data visualization to more intuitively compare the hapiness causes among different subgroups of people based on their demographic features. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-senselabel <- read.csv("C:/Users/zhang/OneDrive/Courseworks/GR5243/Fall2018-Proj1-rz2394/data/senselabel.csv")
-vad <- read.csv("C:/Users/zhang/OneDrive/Courseworks/GR5243/Fall2018-Proj1-rz2394/data/vad.csv")
 demographic <- read.csv("C:/Users/zhang/OneDrive/Courseworks/GR5243/Fall2018-Proj1-rz2394/data/demographic.csv")
 ```
 
@@ -277,23 +278,20 @@ One thing we can notice from the word cloud is that men are more career-oriented
 \newline
 
 ```{r}
-Data_parenthood <- merge(demographic[,c("wid","parenthood")], hm_data[,c("wid","hmid")])
-Data_parenthood <- merge(Data_parenthood[,c("hmid","parenthood")],
-                         senselabel[,c("hmid","supersenseLabel")])
-Data_parenthood <- Data_parenthood[grepl(pattern = "^[a-z]+",
-                                         Data_parenthood$supersenseLabel),]
-Data_parenthood_noun <- Data_parenthood[grepl(pattern = "^[n]",
-                                         Data_parenthood$supersenseLabel),]
+#Data_parenthood <- merge(demographic[,c("wid","parenthood")], hm_data[,c("wid","hmid")])
+#Data_parenthood <- merge(Data_parenthood[,c("hmid","parenthood")],
+#                         senselabel[,c("hmid","supersenseLabel")])
+#Data_parenthood <- Data_parenthood[grepl(pattern = "^[a-z]+",
+#                                         Data_parenthood$supersenseLabel),]
+#Data_parenthood_noun <- Data_parenthood[grepl(pattern = "^[n]",
+#                                         Data_parenthood$supersenseLabel),]
 ```
 
 ```{r}
 
 ```
 
-```{r}
-barplot(table(Data_parenthood_noun$parenthood, Data_parenthood_noun$supersenseLabel), horiz=TRUE, names.arg=name, beside = TRUE)
 
-```
 
 # Area 
 ![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\worldmap.jpg){width=100%}
@@ -421,6 +419,13 @@ mapDevice() #create world map shaped window
 mapCountryData(sPDF,nameColumnToPlot='prop.nature')
 ```
 
+After closely observing and comparing the geographic pattern of hapiness causes in the global heatmap, we can find that the country where people live might be an important factor affecting their hapiness sources. One limitation of this analysis is that the sample sizes of some countries are limited and thus the results for some countries might be less reliable. But if we analyze the pattern on the whole, we can still discover some useful things. We can notice that affectional reasons give more pleasure to people in some less developed countries such as Indo-Pakistan areas or part of Eastern Europe. Besides, the hapiness moments of people in the Western world(North America, Latin America, Oceania and Western Europe) come from bonding more than people in other areas. The formation of close relationships matters more to them. They care less about personal achievement than people in some developing countries such as some Southeastern countries. People in "Third World" are less likely to choose the things regarding enjoy-the-moment or leisure as their major hapiness sources.    
+
+# Conclusion
 
 
+
+# References 
+1. Natural Language Processing: from [Tutorial](https://github.com/TZstatsADS/ADS_Teaching/blob/master/Projects_StarterCodes/Project1-RNotebook/doc/Text_Processing.Rmd)
+2. Text Mining: from [Topic Modelling](https://www.tidytextmining.com/topicmodeling.html#latent-dirichlet-allocation)
 
