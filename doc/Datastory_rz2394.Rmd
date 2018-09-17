@@ -1,14 +1,19 @@
 ---
 title: "R Notebook"
 output:
-  html_document:
+  html_notebook:
     df_print: paged
+author: Rui Zhang
 ---
 
-# Step 0 - Install and load libraries
-```{r}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 packages.used=c("tm", "wordcloud", "RColorBrewer", 
-                "dplyr", "tidytext")
+                "dplyr", "tidytext", "tidyverse", 
+                "DT", "readr","stringr")
 # check packages that need to be installed.
 packages.needed=setdiff(packages.used, 
                         intersect(installed.packages()[,1], 
@@ -18,19 +23,261 @@ if(length(packages.needed)>0){
   install.packages(packages.needed, dependencies = TRUE,
                    repos='http://cran.us.r-project.org')
 }
-
-```
-
-```{r}
 library(tm)
 library(wordcloud)
 library(RColorBrewer)
 library(dplyr)
 library(tidytext)
+library(tidyverse)
+library(DT)
+library(readr)
+library(stringr)
 ```
 
-This notebook was prepared with the following environmental settings.
-
-```{r}
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# This notebook was prepared with the following environmental settings.
 print(R.version)
 ```
+
+```{r read data, echo=FALSE, message=FALSE, warning=FALSE}
+urlfile<-'https://raw.githubusercontent.com/rit-public/HappyDB/master/happydb/data/cleaned_hm.csv'
+hm_data <- read_csv(urlfile)
+```
+
+```{r text processing in tm, echo=FALSE, message=FALSE, warning=FALSE}
+corpus <- VCorpus(VectorSource(hm_data$cleaned_hm))%>%
+  tm_map(content_transformer(tolower))%>%
+  tm_map(removePunctuation)%>%
+  tm_map(removeNumbers)%>%
+  tm_map(removeWords, character(0))%>%
+  tm_map(stripWhitespace)
+```
+
+```{r stemming, echo=FALSE, message=FALSE, warning=FALSE}
+stemmed <- tm_map(corpus, stemDocument) %>%
+  tidy() %>%
+  select(text)
+```
+
+```{r tidy dictionary, echo=FALSE, message=FALSE, warning=FALSE}
+dict <- tidy(corpus) %>%
+  select(text) %>%
+  unnest_tokens(dictionary, text)
+```
+
+```{r stopwords, echo=FALSE, message=FALSE, warning=FALSE}
+data("stop_words")
+
+word <- c("happy","ago","yesterday","lot","today","months","month",
+                 "happier","happiest","last","week","past")
+
+stop_words <- stop_words %>%
+  bind_rows(mutate(tibble(word), lexicon = "updated"))
+```
+
+```{r tidy stems with dictionary, echo=FALSE, message=FALSE, warning=FALSE}
+completed <- stemmed %>%
+  mutate(id = row_number()) %>%
+  unnest_tokens(stems, text) %>%
+  bind_cols(dict) %>%
+  anti_join(stop_words, by = c("dictionary" = "word"))
+```
+
+```{r stem completion, echo=FALSE, message=FALSE, warning=FALSE}
+completed <- completed %>%
+  group_by(stems) %>%
+  count(dictionary) %>%
+  mutate(word = dictionary[which.max(n)]) %>%
+  ungroup() %>%
+  select(stems, word) %>%
+  distinct() %>%
+  right_join(completed) %>%
+  select(-stems)
+```
+
+```{r reverse unnest, echo=FALSE, message=FALSE, warning=FALSE}
+completed <- completed %>%
+  group_by(id) %>%
+  summarise(text = str_c(word, collapse = " ")) %>%
+  ungroup()
+```
+
+```{r cleaned hm_data, echo=FALSE, message=FALSE, warning=FALSE}
+hm_data <- hm_data %>%
+  mutate(id = row_number()) %>%
+  inner_join(completed)
+```
+
+```{r export data, echo=FALSE, message=FALSE, warning=FALSE}
+write_csv(hm_data, "../output/processed_moments.csv")
+```
+
+
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\title.jpeg)
+
+\newline
+\newline
+\newline
+
+This project
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+senselabel <- read.csv("C:/Users/zhang/OneDrive/Courseworks/GR5243/Fall2018-Proj1-rz2394/data/senselabel.csv")
+vad <- read.csv("C:/Users/zhang/OneDrive/Courseworks/GR5243/Fall2018-Proj1-rz2394/data/vad.csv")
+demographic <- read.csv("C:/Users/zhang/OneDrive/Courseworks/GR5243/Fall2018-Proj1-rz2394/data/demographic.csv")
+```
+
+# Do sources of hapiness vary across people in different age groups?   
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\age.jpg)
+
+\newline
+\newline
+\newline
+
+I divide the whole population into five groups based on their age: iGeneration(Teens & younger), Millennials(18 - 34 years old), Generation X(35 - 49 years old), Baby Boomers(50 - 69 years old) and Senior Citizen(70+ years older). Then I draw a contingency table of age group and happy moments categories:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+Data_age <- merge(hm_data[,c("wid","predicted_category")],demographic[,c("wid","age")])
+# join the processed happy moments dataset with age in demographic data
+Data_age <- Data_age[order(Data_age$age),]
+Data_age <- Data_age[grepl("[0-9]{1,2}", Data_age$age),] # remove rows with invalid values
+Data_age$age <- as.numeric(Data_age$age)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+Data_age$age_group[Data_age$age < 18] <-  "iGeneration"
+Data_age$age_group[Data_age$age < 35 & Data_age$age >= 18] <- "Millennial"
+Data_age$age_group[Data_age$age < 50 & Data_age$age >= 35] <- "Generation X"
+Data_age$age_group[Data_age$age < 70 & Data_age$age >= 50] <- "Baby Boomers"
+Data_age$age_group[Data_age$age >= 70] <- "Senior Citizen"
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+Data_age_split <- split(Data_age, Data_age$age_group)
+categorycount <- function(df){
+  affection        <- sum(df$predicted_category == "affection")
+  achievement      <- sum(df$predicted_category == "achievement")
+  bonding          <- sum(df$predicted_category == "bonding")
+  enjoy_the_moment <- sum(df$predicted_category == "enjoy_the_moment")
+  leisure          <- sum(df$predicted_category == "leisure")
+  exercise         <- sum(df$predicted_category == "exercise")
+  nature           <- sum(df$predicted_category == "nature")
+  return(c(affection,achievement,bonding,enjoy_the_moment,leisure,exercise,nature))
+}
+age.summatrix <- sapply(Data_age_split, categorycount)
+rownames(age.summatrix) <- c("affection","achievement","bonding",
+                          "enjoy_the_moment","leisure","exercise","nature") 
+age.summatrix <- age.summatrix[,c("iGeneration","Millennial",
+                                  "Generation X","Baby Boomers","Senior Citizen")]
+age.summatrix
+```
+
+Next, we conduct a chi-square test to check the correlation between age and what make people happy.
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+chisq.test(age.summatrix)
+```
+
+We can see that the Chi-squared statistic is significant, which provides evidence that age does have an effect on the reasons why people feel happy. Then I explore the patterns of happiness categories among those age groups. I display the proportions of hapiness sources in the table below: 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+categoryproportion <- function(df){
+  affection        <- mean(df$predicted_category == "affection")
+  achievement      <- mean(df$predicted_category == "achievement")
+  bonding          <- mean(df$predicted_category == "bonding")
+  enjoy_the_moment <- mean(df$predicted_category == "enjoy_the_moment")
+  leisure          <- mean(df$predicted_category == "leisure")
+  exercise         <- mean(df$predicted_category == "exercise")
+  nature           <- mean(df$predicted_category == "nature")
+  return(c(affection,achievement,bonding,enjoy_the_moment,leisure,exercise,nature))
+}
+age.propmatrix <- sapply(Data_age_split, categoryproportion)
+rownames(age.propmatrix) <- c("affection","achievement","bonding",
+                          "enjoy_the_moment","leisure","exercise","nature") 
+age.propmatrix <- 
+  age.propmatrix[,c("iGeneration","Millennial","Generation X",
+                    "Baby Boomers","Senior Citizen")]
+age.propmatrix
+```
+
+We can notice that the proportions of "affection" and "nature" slightly increase as people age while the proportions of "achievement" and "bonding" slightly decrease as people grow older. The reason might be that people tend to become more emotional when they age and their pace of life gets slower. So, they might gradually care less about their career and achievement and more about their beloved people. They also want to get closer to nature and experience a better environment. I further visualize the proportion pattern in the following heatmap:  
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+age.heatmap <- heatmap(t(age.propmatrix),col = cm.colors(256), margins=c(10,5))
+```
+
+This changes of color depth in the above headmap more intuitively support my finding that people tend to switch from career/achievement to emotional needs as they age.     
+
+# Do the things that make men and women happy different? 
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\gender.jpg)
+
+\newline
+\newline
+\newline
+
+First I display a contingency table of gender and hapiness categories and perform the chi-square test to check the correlation between them:
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+Data_gender <- merge(hm_data[,c("wid", "text", "predicted_category")],
+                     demographic[,c("wid", "gender")])
+Data_gender <- Data_gender[Data_gender$gender%in%c("f","m"),]
+# join the processed happy moments dataset with gender in demographic data
+Data_gender_split <- split(Data_gender, Data_gender$gender)
+gender.summatrix <- sapply(Data_gender_split, categorycount)
+gender.summatrix <- gender.summatrix[1:7,2:3]
+rownames(gender.summatrix) <- c("affection","achievement","bonding",
+                          "enjoy_the_moment","leisure","exercise","nature") 
+gender.summatrix
+```
+
+```{r echo=FALSE, warning=FALSE}
+chisq.test(gender.summatrix)
+```
+
+The chi-squared statistic is 1677, which significantly demonstrates that the patterns of happiness sources for men and women are different. Next, I draw the word clouds to show the most high-frequency words in the cleaned version of happiness texts for both genders respectively.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+Data_gender_m <- Data_gender[Data_gender$gender == "m", ]
+Data_gender_f <- Data_gender[Data_gender$gender == "f", ]
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ff.all <- Corpus(VectorSource(Data_gender_f$text))
+tdm.all<-TermDocumentMatrix(ff.all)
+tdm.tidy=tidy(tdm.all)
+tdm.overall=summarise(group_by(tdm.tidy, term), sum(count))
+wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
+          scale=c(5,0.5),
+          max.words=100,
+          min.freq=1,
+          random.order=FALSE,
+          rot.per=0.3,
+          use.r.layout=T,
+          random.color=FALSE,
+          colors=brewer.pal(9,"Blues"))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ff.all <- Corpus(VectorSource(Data_gender_m$text))
+tdm.all<-TermDocumentMatrix(ff.all)
+tdm.tidy=tidy(tdm.all)
+tdm.overall=summarise(group_by(tdm.tidy, term), sum(count))
+wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
+          scale=c(5,0.5),
+          max.words=100,
+          min.freq=1,
+          random.order=FALSE,
+          rot.per=0.3,
+          use.r.layout=T,
+          random.color=FALSE,
+          colors=brewer.pal(9,"Blues"))
+```
+
+
+
+# Parenthood
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\parenthood.jpg)
+
+\newline
+\newline
+\newline
+
+
