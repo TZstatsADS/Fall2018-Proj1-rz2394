@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 packages.used=c("tm", "wordcloud", "RColorBrewer", 
                 "dplyr", "tidytext", "tidyverse", 
-                "DT", "readr","stringr")
+                "DT", "readr", "stringr", "rworldmap")
 # check packages that need to be installed.
 packages.needed=setdiff(packages.used, 
                         intersect(installed.packages()[,1], 
@@ -32,6 +32,7 @@ library(tidyverse)
 library(DT)
 library(readr)
 library(stringr)
+library(rworldmap)
 ```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -113,7 +114,7 @@ write_csv(hm_data, "../output/processed_moments.csv")
 ```
 
 
-![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\title.jpeg)
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\title.jpg){width=100%}
 
 \newline
 \newline
@@ -128,31 +129,25 @@ demographic <- read.csv("C:/Users/zhang/OneDrive/Courseworks/GR5243/Fall2018-Pro
 ```
 
 # Do sources of hapiness vary across people in different age groups?   
-![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\age.jpg)
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\age.jpg){width=100%}
 
 \newline
 \newline
 \newline
 
-I divide the whole population into five groups based on their age: iGeneration(Teens & younger), Millennials(18 - 34 years old), Generation X(35 - 49 years old), Baby Boomers(50 - 69 years old) and Senior Citizen(70+ years older). Then I draw a contingency table of age group and happy moments categories:
+I divide the whole population into five groups based on their age: iGeneration(Teens & younger), Millennials(18 - 34 years old), Generation X(35 - 49 years old), Baby Boomers(50 - 69 years old) and Senior Citizen(70+ years older). Then I make a contingency table of age group and happy moments categories:
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 Data_age <- merge(hm_data[,c("wid","predicted_category")],demographic[,c("wid","age")])
 # join the processed happy moments dataset with age in demographic data
 Data_age <- Data_age[order(Data_age$age),]
 Data_age <- Data_age[grepl("[0-9]{1,2}", Data_age$age),] # remove rows with invalid values
 Data_age$age <- as.numeric(Data_age$age)
-```
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
 Data_age$age_group[Data_age$age < 18] <-  "iGeneration"
 Data_age$age_group[Data_age$age < 35 & Data_age$age >= 18] <- "Millennial"
 Data_age$age_group[Data_age$age < 50 & Data_age$age >= 35] <- "Generation X"
 Data_age$age_group[Data_age$age < 70 & Data_age$age >= 50] <- "Baby Boomers"
 Data_age$age_group[Data_age$age >= 70] <- "Senior Citizen"
-```
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
 Data_age_split <- split(Data_age, Data_age$age_group)
 categorycount <- function(df){
   affection        <- sum(df$predicted_category == "affection")
@@ -173,13 +168,12 @@ age.summatrix
 ```
 
 Next, we conduct a chi-square test to check the correlation between age and what make people happy.
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 chisq.test(age.summatrix)
 ```
 
 We can see that the Chi-squared statistic is significant, which provides evidence that age does have an effect on the reasons why people feel happy. Then I explore the patterns of happiness categories among those age groups. I display the proportions of hapiness sources in the table below: 
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 categoryproportion <- function(df){
   affection        <- mean(df$predicted_category == "affection")
   achievement      <- mean(df$predicted_category == "achievement")
@@ -201,21 +195,21 @@ age.propmatrix
 
 We can notice that the proportions of "affection" and "nature" slightly increase as people age while the proportions of "achievement" and "bonding" slightly decrease as people grow older. The reason might be that people tend to become more emotional when they age and their pace of life gets slower. So, they might gradually care less about their career and achievement and more about their beloved people. They also want to get closer to nature and experience a better environment. I further visualize the proportion pattern in the following heatmap:  
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height=5, fig.width=7}
 age.heatmap <- heatmap(t(age.propmatrix),col = cm.colors(256), margins=c(10,5))
 ```
 
 This changes of color depth in the above headmap more intuitively support my finding that people tend to switch from career/achievement to emotional needs as they age.     
 
 # Do the things that make men and women happy different? 
-![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\gender.jpg)
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\gender.jpg){width=100%}
 
 \newline
 \newline
 \newline
 
 First I display a contingency table of gender and hapiness categories and perform the chi-square test to check the correlation between them:
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 Data_gender <- merge(hm_data[,c("wid", "text", "predicted_category")],
                      demographic[,c("wid", "gender")])
 Data_gender <- Data_gender[Data_gender$gender%in%c("f","m"),]
@@ -228,18 +222,19 @@ rownames(gender.summatrix) <- c("affection","achievement","bonding",
 gender.summatrix
 ```
 
-```{r echo=FALSE, warning=FALSE}
+```{r echo=TRUE, warning=FALSE}
 chisq.test(gender.summatrix)
 ```
 
 The chi-squared statistic is 1677, which significantly demonstrates that the patterns of happiness sources for men and women are different. Next, I draw the word clouds to show the most high-frequency words in the cleaned version of happiness texts for both genders respectively.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 Data_gender_m <- Data_gender[Data_gender$gender == "m", ]
 Data_gender_f <- Data_gender[Data_gender$gender == "f", ]
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+The word cloud for females is as follows:  
+```{r echo=TRUE, message=FALSE, warning=FALSE,fig.height=5, fig.width=8}
 ff.all <- Corpus(VectorSource(Data_gender_f$text))
 tdm.all<-TermDocumentMatrix(ff.all)
 tdm.tidy=tidy(tdm.all)
@@ -255,7 +250,10 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
           colors=brewer.pal(9,"Blues"))
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+Women more often choose family over work. One reality persists that women most often are the ones who adjust their schedules and make compromises when the needs of children and other family members collide with work. 
+
+The word cloud for males is as follows:  
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height=5, fig.width=8}
 ff.all <- Corpus(VectorSource(Data_gender_m$text))
 tdm.all<-TermDocumentMatrix(ff.all)
 tdm.tidy=tidy(tdm.all)
@@ -274,10 +272,29 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
 
 
 # Parenthood
-![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\parenthood.jpg)
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\parenthood.jpg){width=100%}
 
 \newline
 \newline
 \newline
+
+```{r}
+
+```
+
+# Area 
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\worldmap.jpg){width=100%}
+
+\newline
+\newline
+\newline
+
+
+
+
+
+
+
+
 
 
