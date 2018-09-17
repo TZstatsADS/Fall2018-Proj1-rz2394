@@ -277,6 +277,21 @@ One thing we can notice from the word cloud is that men are more career-oriented
 \newline
 
 ```{r}
+Data_parenthood <- merge(demographic[,c("wid","parenthood")], hm_data[,c("wid","hmid")])
+Data_parenthood <- merge(Data_parenthood[,c("hmid","parenthood")],
+                         senselabel[,c("hmid","supersenseLabel")])
+Data_parenthood <- Data_parenthood[grepl(pattern = "^[a-z]+",
+                                         Data_parenthood$supersenseLabel),]
+Data_parenthood_noun <- Data_parenthood[grepl(pattern = "^[n]",
+                                         Data_parenthood$supersenseLabel),]
+```
+
+```{r}
+
+```
+
+```{r}
+barplot(table(Data_parenthood_noun$parenthood, Data_parenthood_noun$supersenseLabel), horiz=TRUE, names.arg=name, beside = TRUE)
 
 ```
 
@@ -375,21 +390,36 @@ mapCountryData(sPDF,nameColumnToPlot='prop.exercise')
 ```
 
 ```{r}
-country.prop.exercise <- function(df){
-  return(mean(df$predicted_category == "exercise"))
+country.prop.leisure <- function(df){
+  return(mean(df$predicted_category == "leisure"))
 }
-prop.exercise     <- sapply(Data_country_split, country.prop.exercise)
-prop.exercise.df  <- data.frame(names(prop.exercise), prop.exercise)
-rownames(prop.exercise.df) <- NULL
-prop.exercise.df  <- prop.exercise.df[-1,]
-colnames(prop.exercise.df) <- c("ISO3", "prop.exercise")
-sPDF <- joinCountryData2Map(prop.exercise.df, 
+prop.leisure     <- sapply(Data_country_split, country.prop.leisure)
+prop.leisure.df  <- data.frame(names(prop.leisure), prop.leisure)
+rownames(prop.leisure.df) <- NULL
+prop.leisure.df  <- prop.leisure.df[-1,]
+colnames(prop.leisure.df) <- c("ISO3", "prop.leisure")
+sPDF <- joinCountryData2Map(prop.leisure.df, 
                             joinCode = "ISO3",
                             nameJoinColumn = "ISO3")
 mapDevice() #create world map shaped window
-mapCountryData(sPDF,nameColumnToPlot='prop.exercise')
+mapCountryData(sPDF,nameColumnToPlot='prop.leisure')
 ```
 
+```{r}
+country.prop.nature <- function(df){
+  return(mean(df$predicted_category == "nature"))
+}
+prop.nature     <- sapply(Data_country_split, country.prop.nature)
+prop.nature.df  <- data.frame(names(prop.nature), prop.nature)
+rownames(prop.nature.df) <- NULL
+prop.nature.df  <- prop.nature.df[-1,]
+colnames(prop.nature.df) <- c("ISO3", "prop.nature")
+sPDF <- joinCountryData2Map(prop.nature.df, 
+                            joinCode = "ISO3",
+                            nameJoinColumn = "ISO3")
+mapDevice() #create world map shaped window
+mapCountryData(sPDF,nameColumnToPlot='prop.nature')
+```
 
 
 
