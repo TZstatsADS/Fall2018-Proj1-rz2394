@@ -330,6 +330,15 @@ bing_word_counts %>%
 
 When we analyze the positive sentiments, we can find that childless people enjoy more personal pleasure and freedom because we can notice the words such as "free", "delicious", etc. contribute more to their positive sentiment while those people who become parents seem to enjoy more joint celebration or have some fun together. Some useful insights can also be obtained by analyzing the negative sentiments. Those childless people have more "unexpected" or "stress" moments while people suffer more "worried" or "struggling" moments after they become parents because they are concerned about their kids and they need to undertake more responsibilites of being a good parent. It is the process of overcoming the difficulties and fulfilling their responsibilities that gives those parents more hapiness. In short, parenthood changes the life style and mental status of people and thus highly affect people's sources of hapiness.   
 
+# Marriage
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+Data_marital <- merge(hm_data[,c("wid","text")],demographic[,c("wid","marital")])
+# join the processed happy moments dataset with country in demographic data
+Data_marital <- Data_marital[Data_marital$marital%in%c("married","single"),
+                             c("marital","text")]
+# I only consider two marital status: married and single for simplicity 
+```
+
 # How do people around the world understand hapiness in different ways? 
 ![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\worldmap.jpg){width=100%}
 
