@@ -270,35 +270,74 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
 ```
 One thing we can notice from the word cloud is that men are more career-oriented than women. The happy moments key words regarding achievement in both job and school appear much more frequently than women. Another thing worth noting is that the hapiness sources of men are obviously more diverse than women. Besides affection and achievement, the things that can make men happy also include exercise, sports, game, video, party, etc. in their leisure time. Men seem to persue a rich, full and colorful life.    
 
-# Parenthood
+# Comparative Sentiment Analysis - Do people feel happy due to different reasons before and after they become parents?   
 ![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\parenthood.jpg){width=100%}
 
 \newline
 \newline
 \newline
 
-```{r}
-#Data_parenthood <- merge(demographic[,c("wid","parenthood")], hm_data[,c("wid","hmid")])
-#Data_parenthood <- merge(Data_parenthood[,c("hmid","parenthood")],
-#                         senselabel[,c("hmid","supersenseLabel")])
-#Data_parenthood <- Data_parenthood[grepl(pattern = "^[a-z]+",
-#                                         Data_parenthood$supersenseLabel),]
-#Data_parenthood_noun <- Data_parenthood[grepl(pattern = "^[n]",
-#                                         Data_parenthood$supersenseLabel),]
+Next, I will perform comparative sentiment analysis on people who have already become parents and people who haven't. I want to explore whether having children affect their sources of hapiness by their most common positive and negative words.     
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+Data_parenthood <- merge(demographic[,c("wid","parenthood")], hm_data[,c("wid","text")])
+Data_parenthood <- Data_parenthood[,c("text","parenthood")] 
 ```
 
-```{r}
-
+The result of sentiment analysis for those parents are as follows: 
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+tidy_parenthood <- Data_parenthood %>%
+  filter(parenthood == "y") %>%
+  unnest_tokens(word, text)
+bing_word_counts <- tidy_parenthood %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  top_n(10) %>%
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(y = "Contribution to sentiment",
+       x = NULL) +
+  coord_flip()
 ```
 
+The result of sentiment analysis for those childless people is shown as below: 
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+tidy_parenthood <- Data_parenthood %>%
+  filter(parenthood == "n") %>%
+  unnest_tokens(word, text)
+bing_word_counts <- tidy_parenthood %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  top_n(10) %>%
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(y = "Contribution to sentiment",
+       x = NULL) +
+  coord_flip()
+```
 
+When we analyze the positive sentiments, we can find that childless people enjoy more personal pleasure and freedom because we can notice the words such as "free", "delicious", etc. contribute more to their positive sentiment while those people who become parents seem to enjoy more joint celebration or have some fun together. Some useful insights can also be obtained by analyzing the negative sentiments. Those childless people have more "unexpected" or "stress" moments while people suffer more "worried" or "struggling" moments after they become parents because they are concerned about their kids and they need to undertake more responsibilites of being a good parent. It is the process of overcoming the difficulties and fulfilling their responsibilities that gives those parents more hapiness. In short, parenthood changes the life style and mental status of people and thus highly affect people's sources of hapiness.   
 
-# Area 
+# How do people around the world understand hapiness in different ways? 
 ![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\worldmap.jpg){width=100%}
 
 \newline
 \newline
 \newline
+
+Here I plot global heatmaps for each hapiness category to display the geographic patterns of hapiness causes. This way I can explore whether country of residence impacts people's hapiness notion. 
 
 ```{r}
 Data_country <- merge(hm_data[,c("wid","predicted_category")],demographic[,c("wid","country")])
