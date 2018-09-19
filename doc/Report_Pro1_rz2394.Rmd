@@ -208,7 +208,7 @@ age.heatmap <- heatmap(t(age.propmatrix),col = cm.colors(256), margins=c(10,5))
 
 These changes of color depth in the above heatmap more intuitively support my finding that people tend to switch from career/achievement to emotional needs as they age.     
 
-# Do the things that make men and women happy different? 
+# Are the things that make men and women happy different? 
 ![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\gender.jpg){width=100%}
 
 \newline
@@ -256,6 +256,11 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
           random.color=FALSE,
           colors=brewer.pal(9,"Blues"))
 ```
+
+\newline
+\newline
+\newline
+
 We can notice that many of the top high-frequency words have to do with family members, household chores or daily activities. The things that women care about most are usually associated with "affection". This reflects the fact that women are more emotional and they need to express their feelings and relate to one another. Women more often choose family over work. One reality persists that women most often are the ones who adjust their schedules and make compromises when the needs of children and other family members collide with work. 
 
 The word cloud for males is as follows:  
@@ -274,6 +279,11 @@ wordcloud(tdm.overall$term, tdm.overall$`sum(count)`,
           random.color=FALSE,
           colors=brewer.pal(9,"Blues"))
 ```
+
+\newline
+\newline
+\newline
+
 One thing we can notice from the word cloud is that men are more career-oriented than women. The happy moments key words regarding achievement in both job and school appear much more frequently than women. Another thing worth noting is that the happiness sources of men are obviously more diverse than women. Besides affection and achievement, the things that can make men happy also include exercise, sports, game, video, party, etc. in their leisure time. Men seem to pursue a rich, full and colorful life.    
 
 # Comparative Sentiment Analysis - Do people feel happy due to different reasons before and after they become parents?   
