@@ -14,7 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 packages.used=c("tm", "wordcloud", "RColorBrewer", 
                 "dplyr", "tidytext", "tidyverse", 
-                "DT", "readr", "stringr", "rworldmap")
+                "DT", "readr", "stringr", "rworldmap", 
+                "ggraph","igraph")
 # check packages that need to be installed.
 packages.needed=setdiff(packages.used, 
                         intersect(installed.packages()[,1], 
@@ -34,6 +35,8 @@ library(DT)
 library(readr)
 library(stringr)
 library(rworldmap)
+library(ggraph)
+library(igraph)
 ```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -330,13 +333,78 @@ bing_word_counts %>%
 
 When we analyze the positive sentiments, we can find that childless people enjoy more personal pleasure and freedom because we can notice the words such as "free", "delicious", etc. contribute more to their positive sentiment while those people who become parents seem to enjoy more joint celebration or have some fun together. Some useful insights can also be obtained by analyzing the negative sentiments. Those childless people have more "unexpected" or "stress" moments while people suffer more "worried" or "struggling" moments after they become parents because they are concerned about their kids and they need to undertake more responsibilites of being a good parent. It is the process of overcoming the difficulties and fulfilling their responsibilities that gives those parents more hapiness. In short, parenthood changes the life style and mental status of people and thus highly affect people's sources of hapiness.   
 
-# Marriage
+# Are people's happy moments also associated with their marital status?  
+![](C:\Users\zhang\OneDrive\Courseworks\GR5243\Fall2018-Proj1-rz2394\figs\marriage.jpg){width=100%}
+
+\newline
+\newline
+\newline
+
+In this part, I want to introduce another method to perform comparative analysis for people in two marital status:married and single. Here I create bigrams to explore the correlations between words and visualize the network of bigrams. Then I can find the different patterns of the frequency or sentiments. 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 Data_marital <- merge(hm_data[,c("wid","text")],demographic[,c("wid","marital")])
 # join the processed happy moments dataset with country in demographic data
 Data_marital <- Data_marital[Data_marital$marital%in%c("married","single"),
                              c("marital","text")]
 # I only consider two marital status: married and single for simplicity 
+```
+
+The bigram for married people's happy moment words is as below:  
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+marital_bigrams <- Data_marital %>%
+  filter(marital=="married") %>% # picking out records where marital status is married
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+bigrams_separated <- marital_bigrams %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+bigrams_filtered <- bigrams_separated %>% # remove uninteresting stop words
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word)
+bigram_counts <- bigrams_filtered %>% 
+  count(word1, word2, sort = TRUE)
+head(bigram_counts,15)
+```
+
+The network graph for married people's happy moment words is as below:  
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+bigram_graph <- bigram_counts %>%
+  filter(n > 100) %>%
+  graph_from_data_frame()
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
+                 arrow = a, end_cap = circle(.07, 'inches')) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()
+```
+
+The bigram for single people's happy moment words is as below:  
+```{r}
+marital_bigrams <- Data_marital %>%
+  filter(marital=="single") %>% # picking out records where marital status is single
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+bigrams_separated <- marital_bigrams %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+bigrams_filtered <- bigrams_separated %>% # remove uninteresting stop words
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word)
+bigram_counts <- bigrams_filtered %>% 
+  count(word1, word2, sort = TRUE)
+head(bigram_counts,15)
+```
+
+The network graph for single people's happy moment words is as below:  
+```{r}
+bigram_graph <- bigram_counts %>%
+  filter(n > 100) %>%
+  graph_from_data_frame()
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
+                 arrow = a, end_cap = circle(.07, 'inches')) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()
 ```
 
 # How do people around the world understand hapiness in different ways? 
